@@ -81,14 +81,6 @@ for i in range(10, len(ans_Angle_list)-1):
     if abs(ans_Angle_list[i] - ans_Angle_list[i+1]) > 150:
         ans_Angle_list[i+1] -= 180
 
-# for i in range(len(ans_Angle_list)-1):
-#     ans_ans_Angle_list.append(ans_Angle_list[i] + (180 * m))
-#     if abs(ans_Angle_list[i] - ans_Angle_list[i + 1]) > 100 and frame > 35:
-#         m += 1
-#         frame = 0
-#     frame += 1
-# ans_ans_Angle_list.append(ans_ans_Angle_list[-1] + (180 * m))
-
 # 時間を作成する
 time = np.arange(0, len(angle_list)/SAMPLING, 1/SAMPLING)
 

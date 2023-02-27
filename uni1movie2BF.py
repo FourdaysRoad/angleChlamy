@@ -8,7 +8,8 @@ from scipy.signal import find_peaks
 SAMPLING = 600
 
 # 動画を開く
-cap = cv2.VideoCapture('C:/Users/81805/Desktop/20230223_uni1回転数計測/uni1回転数計測_蛍光サンプル.avi')
+# cap = cv2.VideoCapture('C:/Users/81805/Desktop/20230223_uni1回転数計測/uni1回転数計測_蛍光サンプル.avi')
+cap = cv2.VideoCapture('C:/Users/81805/Desktop/20230227_uni1回転数サンプル追加/クラミ右回転サンプル.avi')
 
 angle_list = []
 # フレームを取得する
@@ -63,29 +64,82 @@ cv2.destroyAllWindows()
 print(angle_list)
 
 
-# グラフを右上がり/右下がりにするための処理
-ans_Angle_list = []
-ans_ans_Angle_list = []
+# 反時計回りに回る細胞のグラフを右下がりにするための処理
+ans_CCW_Angle_list = []
 n = 0
-m = 0
 frame = 0
 for i in range(len(angle_list)-1):
-    ans_Angle_list.append(angle_list[i] - (180 * n))
+    ans_CCW_Angle_list.append(angle_list[i] - (180 * n))
     if abs(angle_list[i] - angle_list[i + 1]) > 100 and frame > 35:
         n += 1
         frame = 0
     frame += 1
-ans_Angle_list.append(ans_Angle_list[-1] + (180 * n))
+ans_CCW_Angle_list.append(ans_CCW_Angle_list[-1] + (180 * n))
 
-for i in range(10, len(ans_Angle_list)-1):
-    if abs(ans_Angle_list[i] - ans_Angle_list[i+1]) > 150:
-        ans_Angle_list[i+1] -= 180
+for i in range(10, len(ans_CCW_Angle_list)-1):
+    if abs(ans_CCW_Angle_list[i] - ans_CCW_Angle_list[i+1]) > 150:
+        ans_CCW_Angle_list[i+1] -= 180
+        
+# 時計回りに回る細胞のグラフを右上がりにするための処理
+ans_CW_Angle_list = []
+m = 0
+frame = 0
+for i in range(len(angle_list)-1):
+    ans_CW_Angle_list.append(angle_list[i] + (180 * m))
+    if abs(angle_list[i] - angle_list[i + 1]) > 100 and frame > 35:
+        m += 1
+        frame = 0
+    frame += 1
+ans_CW_Angle_list.append(ans_CW_Angle_list[-1] + (180 * m))
+
+for i in range(10, len(ans_CW_Angle_list)-1):
+    if abs(ans_CW_Angle_list[i] - ans_CW_Angle_list[i+1]) > 150:
+        ans_CW_Angle_list[i+1] += 180
+
+# 右回りか左回りがを判定する
+
+#秋山浩一朗  
+# count = 0
+# for i in range(10, len(ans_CCW_Angle_list)):
+#     if abs(ans_CCW_Angle_list[i] - ans_CCW_Angle_list[i-1]) >= 150:
+#             count += 1
+#             if count >= 2:
+#                ans_Angle_list = ans_CCW_Angle_list
+#             break
+#     else:
+#         ans_Angle_list = ans_CW_Angle_list
+
+def gudge_direction(a_list, b_list):
+    a_diff = np.diff(a_list)
+    b_diff = np.diff(b_list)
+    
+    a_std = np.std(a_diff)
+    b_std = np.std(b_diff)
+    
+    if a_std < b_std:
+        return a_list
+    else:
+        return b_list
+    
+ans_Angle_list = gudge_direction(ans_CCW_Angle_list, ans_CW_Angle_list)
+
+    
+# CCW_Angle_diff = np.diff(ans_CCW_Angle_list)
+# CCW_Angle_diff_sd = np.std(CCW_Angle_diff)
+
+# CW_Angle_diff = np.diff(ans_CW_Angle_list)
+# CW_Angle_diff_sd = np.std(CW_Angle_diff)
+
+# if CCW_Angle_diff_sd < CW_Angle_diff_sd:
+#     print("左回り")
+# else:
+    # print("右回り")
+    
 
 # 時間を作成する
 time = np.arange(0, len(angle_list)/SAMPLING, 1/SAMPLING)
 
 # 折れ線グラフを作成する
-plt.plot(time[:-1], ans_Angle_list[:-1])
 
 # ピークを抽出する
 ans_Angle_list_np = np.array(ans_Angle_list)
@@ -93,6 +147,7 @@ peaks_dict = find_peaks(ans_Angle_list_np)
 peaks = peaks_dict[0]
 
 # ピークの位置に赤いxをプロットする
+plt.plot(time[:-1], ans_Angle_list[:-1])
 plt.plot(time[peaks], ans_Angle_list_np[peaks], ".", color='red')
 
 # グラフを表示する
@@ -112,16 +167,16 @@ frequency = 1/ mean_distance
 print(f"鞭毛打頻度 (Hz): {frequency}")
 
 
-# ピークを抽出する
-ans_Angle_list_np = np.array(ans_Angle_list)
-peaks_dict = find_peaks(ans_Angle_list_np)
-peaks = peaks_dict[0]
+# # ピークを抽出する
+# ans_Angle_list_np = np.array(ans_Angle_list)
+# peaks_dict = find_peaks(ans_Angle_list_np)
+# peaks = peaks_dict[0]
 
 # 3番目のピークの位置を取得する
 third_peak_idx = 2  # 0-indexed
 third_peak_pos = peaks[third_peak_idx]
 
-# 3番目のピークから、3600度変化がある位置を探す
+# # 3番目のピークから、3600度変化がある位置を探す
 angle_diff_limit = 3600
 angle_diff = 0
 for i in range(third_peak_pos, len(angle_list)-1):
@@ -130,6 +185,6 @@ for i in range(third_peak_pos, len(angle_list)-1):
         # 3600度変化がある位置を発見
         break
 
-# 3番目のピークから10回転するのにかかる時間を測り、1回転あたりにかかる時間を算出
+# # 3番目のピークから10回転するのにかかる時間を測り、1回転あたりにかかる時間を算出
 time_diff = (i - third_peak_pos) / SAMPLING
 print(f"1回転するのにかかる時間: {time_diff/10:.2f}秒")
